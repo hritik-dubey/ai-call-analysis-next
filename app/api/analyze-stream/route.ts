@@ -5,11 +5,6 @@ import { batchCategorizeCallsWithProgress, generateReportWithGemini, setModelCon
 import { calculateStatistics } from '@/lib/statistics'
 import { CallData, AnalysisData } from '@/types'
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-}
 
 function createStreamWriter(controller: ReadableStreamDefaultController, encoder: TextEncoder) {
   return (message: string, type: string = 'info') => {
@@ -74,18 +69,18 @@ export async function POST(request: NextRequest) {
 
         sendLog('📄 Starting Excel file parsing...', 'info')
         sendLog(`📊 File size: ${(buffer.length / 1024).toFixed(2)} KB`, 'info')
-        
+
         const workbook = XLSX.read(buffer, { type: 'buffer' })
         sendLog(`📋 Found ${workbook.SheetNames.length} sheet(s): ${workbook.SheetNames.join(', ')}`, 'info')
         sendLog(`✅ Using sheet: "${workbook.SheetNames[0]}"`, 'info')
-        
+
         const rawData = parseExcelFile(buffer)
         sendLog(`✅ Successfully parsed ${rawData.length} records from Excel file`, 'success')
 
         sendLog('🔍 Validating Excel file structure...', 'info')
         sendLog(`   Validating ${rawData.length} records...`, 'info')
         const validation = validateExcelStructure(rawData)
-        
+
         if (!validation.isValid) {
           sendLog(`❌ Validation failed: ${validation.errors.join(', ')}`, 'error')
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: `Invalid Excel structure: ${validation.errors.join(', ')}` })}\n\n`))
@@ -102,7 +97,7 @@ export async function POST(request: NextRequest) {
         const callsToAnalyze = transformedData
 
         sendLog(`Starting AI categorization for ${callsToAnalyze.length} calls...`, 'info')
-        
+
         const categorizationResults = await batchCategorizeCallsWithProgress(
           callsToAnalyze.map(call => ({
             transcript: call.transcript,
@@ -121,7 +116,7 @@ export async function POST(request: NextRequest) {
         }))
 
         sendLog('Calculating statistics...', 'info')
-        
+
         const analysisData: AnalysisData = calculateStatistics(categorizedCalls)
 
         sendLog('Analysis complete!', 'success')

@@ -4,11 +4,6 @@ import { batchCategorizeCallsWithProgress, generateReportWithGemini, setModelCon
 import { calculateStatistics } from '@/lib/statistics'
 import { CallData, AnalysisData } from '@/types'
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,9 +53,9 @@ export async function POST(request: NextRequest) {
     const validation = validateExcelStructure(rawData)
     if (!validation.isValid) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: `Invalid Excel structure: ${validation.errors.join(', ')}` 
+        {
+          success: false,
+          error: `Invalid Excel structure: ${validation.errors.join(', ')}`
         },
         { status: 400 }
       )
@@ -73,7 +68,7 @@ export async function POST(request: NextRequest) {
     const callsToAnalyze = transformedData
 
     console.log(`Starting AI categorization for ${callsToAnalyze.length} calls...`)
-    
+
     const categorizationResults = await batchCategorizeCallsWithProgress(
       callsToAnalyze.map(call => ({
         transcript: call.transcript,
@@ -90,11 +85,11 @@ export async function POST(request: NextRequest) {
     }))
 
     console.log('Calculating statistics...')
-    
+
     const analysisData: AnalysisData = calculateStatistics(categorizedCalls)
 
     console.log('Generating comprehensive report with Gemini...')
-    
+
     const report = await generateReportWithGemini(analysisData)
 
     console.log('Analysis complete!')
@@ -109,9 +104,9 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error processing file:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error.message || 'An error occurred during analysis' 
+      {
+        success: false,
+        error: error.message || 'An error occurred during analysis'
       },
       { status: 500 }
     )
